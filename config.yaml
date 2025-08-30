@@ -1,0 +1,291 @@
+# 医疗行业服务器加固系统配置文件
+
+# 全局设置
+global:
+  # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_level: INFO
+  
+  # 日志文件路径
+  log_file: "/var/log/security_hardening.log"
+  
+  # 是否启用详细输出
+  verbose: false
+  
+  # 并发检查器数量
+  max_workers: 4
+  
+  # 命令执行超时时间（秒）
+  command_timeout: 30
+  
+  # 是否在检查失败时继续执行
+  continue_on_error: true
+
+# 报告设置
+report:
+  # 默认报告格式: json, html, txt
+  default_format: html
+  
+  # 报告输出目录
+  output_dir: "/tmp/security_reports"
+  
+  # 报告文件名模板
+  filename_template: "security_report_{timestamp}"
+  
+  # 是否包含系统信息
+  include_system_info: true
+  
+  # 是否包含修复建议
+  include_recommendations: true
+
+# 检查器配置
+checkers:
+  # 用户账户安全检查器
+  user_security:
+    enabled: true
+    
+    # 检查项目配置
+    checks:
+      root_account: true
+      password_policy: true
+      account_lockout: true
+      empty_passwords: true
+      duplicate_ids: true
+      sudo_config: true
+      home_permissions: true
+      system_accounts: true
+      password_expiry: true
+      login_failures: true
+    
+    # 修复配置
+    auto_fix:
+      enabled: false
+      backup_files: true
+      
+    # 密码策略配置
+    password_policy:
+      min_length: 8
+      max_age: 90
+      min_age: 1
+      warn_age: 7
+      require_uppercase: true
+      require_lowercase: true
+      require_digits: true
+      require_special: true
+  
+  # 网络安全检查器
+  network_security:
+    enabled: true
+    
+    checks:
+      firewall_status: true
+      open_ports: true
+      network_parameters: true
+      ssh_config: true
+      network_interfaces: true
+      ip_forwarding: true
+      icmp_redirects: true
+      source_routing: true
+      syn_cookies: true
+      listening_services: true
+    
+    auto_fix:
+      enabled: false
+      backup_files: true
+    
+    # 危险端口列表
+    dangerous_ports:
+      - 23    # Telnet
+      - 135   # RPC
+      - 139   # NetBIOS
+      - 445   # SMB
+      - 1433  # SQL Server
+      - 3389  # RDP
+    
+    # 允许的开放端口
+    allowed_ports:
+      - 22    # SSH
+      - 80    # HTTP
+      - 443   # HTTPS
+  
+  # 文件系统检查器
+  filesystem:
+    enabled: true
+    
+    checks:
+      system_file_permissions: true
+      suid_sgid_files: true
+      world_writable_files: true
+      unowned_files: true
+      tmp_permissions: true
+      log_permissions: true
+      config_permissions: true
+      mount_security: true
+    
+    auto_fix:
+      enabled: false
+      backup_files: true
+    
+    # 关键系统文件
+    critical_files:
+      - "/etc/passwd"
+      - "/etc/shadow"
+      - "/etc/group"
+      - "/etc/gshadow"
+      - "/etc/sudoers"
+      - "/etc/ssh/sshd_config"
+    
+    # 扫描目录
+    scan_directories:
+      - "/"
+      - "/usr"
+      - "/var"
+      - "/etc"
+      - "/tmp"
+    
+    # 排除目录
+    exclude_directories:
+      - "/proc"
+      - "/sys"
+      - "/dev"
+      - "/run"
+  
+  # 服务端口检查器
+  service_port:
+    enabled: true
+    
+    checks:
+      open_ports: true
+      dangerous_services: true
+      service_status: true
+      listening_services: true
+      xinetd_services: true
+      systemd_services: true
+      port_bindings: true
+      service_configs: true
+    
+    auto_fix:
+      enabled: false
+      backup_files: true
+    
+    # 危险服务列表
+    dangerous_services:
+      - "telnet"
+      - "rsh"
+      - "rlogin"
+      - "ftp"
+      - "tftp"
+      - "finger"
+      - "echo"
+      - "discard"
+      - "daytime"
+      - "chargen"
+    
+    # 必要服务列表
+    essential_services:
+      - "ssh"
+      - "systemd"
+      - "dbus"
+      - "networkd"
+  
+  # 审计日志检查器
+  audit_log:
+    enabled: true
+    
+    checks:
+      auditd_service: true
+      audit_rules: true
+      log_rotation: true
+      syslog_config: true
+      log_permissions: true
+      login_logs: true
+      security_logs: true
+      log_integrity: true
+      remote_logging: true
+    
+    auto_fix:
+      enabled: false
+      backup_files: true
+    
+    # 审计规则
+    audit_rules:
+      - "-w /etc/passwd -p wa -k passwd_changes"
+      - "-w /etc/group -p wa -k group_changes"
+      - "-w /etc/shadow -p wa -k shadow_changes"
+      - "-w /etc/sudoers -p wa -k sudoers_changes"
+      - "-w /var/log/auth.log -p wa -k auth_log"
+    
+    # 日志文件
+    log_files:
+      - "/var/log/auth.log"
+      - "/var/log/syslog"
+      - "/var/log/messages"
+      - "/var/log/secure"
+      - "/var/log/audit/audit.log"
+
+# 安全评分权重
+scoring:
+  # 检查器权重
+  checker_weights:
+    user_security: 25
+    network_security: 25
+    filesystem: 20
+    service_port: 15
+    audit_log: 15
+  
+  # 严重性权重
+  severity_weights:
+    critical: 10
+    high: 7
+    medium: 4
+    low: 1
+    info: 0
+  
+  # 评分等级
+  score_levels:
+    excellent: 90
+    good: 75
+    fair: 60
+    poor: 40
+    critical: 0
+
+# 修复设置
+fix:
+  # 是否启用自动修复
+  auto_fix_enabled: false
+  
+  # 是否创建备份
+  create_backups: true
+  
+  # 备份目录
+  backup_dir: "/var/backups/security_hardening"
+  
+  # 是否需要确认
+  require_confirmation: true
+  
+  # 修复超时时间（秒）
+  fix_timeout: 60
+
+# 通知设置
+notifications:
+  # 是否启用通知
+  enabled: false
+  
+  # 通知方式: email, syslog, webhook
+  methods:
+    - syslog
+  
+  # 邮件设置
+  email:
+    smtp_server: "localhost"
+    smtp_port: 587
+    username: ""
+    password: ""
+    from_address: "security@example.com"
+    to_addresses:
+      - "admin@example.com"
+  
+  # Webhook设置
+  webhook:
+    url: ""
+    headers: {}
+    timeout: 30
